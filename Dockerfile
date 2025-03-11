@@ -1,19 +1,24 @@
-# Sử dụng base image Golang
-FROM golang:1.23 AS builder  
+FROM golang:1.23.3 AS builder
+
+ENV HOME /app
+ENV CGO_ENABLED 0
+ENV GOOS linux
 
 WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
 
-RUN go mod tidy && go mod download
-RUN go build -o server
+RUN go build -a -installsuffix cgo -o main .
 
-FROM alpine:latest  
+FROM alpine:latest
+
+RUN apk --no-cache add ca-certificates
+
 WORKDIR /root/
 
-RUN apk add --no-cache ca-certificates
-
-COPY --from=builder /app/server .
+COPY --from=builder /app/main .
 
 EXPOSE 8080
 
-CMD ["./server"]
+CMD ["./main"]
