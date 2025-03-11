@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -35,33 +34,14 @@ type IPInfo struct {
 }
 
 func getClientIP(r *http.Request) string {
-	ip := r.Header.Get("X-Forwarded-For")
-	if ip != "" {
-		ips := strings.Split(ip, ",")
-		for _, i := range ips {
-			cleanIP := strings.TrimSpace(i)
-			parsedIP := net.ParseIP(cleanIP)
-			if parsedIP != nil {
-				return cleanIP
-			}
-		}
+	IPAddress := r.Header.Get("X-Real-Ip")
+	if IPAddress == "" {
+		IPAddress = r.Header.Get("X-Forwarded-For")
 	}
-
-	ip = r.Header.Get("X-Real-IP")
-	if ip != "" {
-		parsedIP := net.ParseIP(ip)
-		if parsedIP != nil {
-			return ip
-		}
+	if IPAddress == "" {
+		IPAddress = r.RemoteAddr
 	}
-
-	ip, _, _ = net.SplitHostPort(r.RemoteAddr)
-	parsedIP := net.ParseIP(ip)
-	if parsedIP != nil {
-		return ip
-	}
-
-	return "Unknown"
+	return IPAddress
 }
 
 func getGeoInfo(ip string) (IPInfo, error) {
