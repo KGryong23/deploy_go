@@ -34,14 +34,19 @@ type IPInfo struct {
 }
 
 func getClientIP(r *http.Request) string {
-	IPAddress := r.Header.Get("X-Real-Ip")
-	if IPAddress == "" {
-		IPAddress = r.Header.Get("X-Forwarded-For")
+	ip := r.Header.Get("Fly-Client-IP")
+	if ip == "" {
+		ip = r.Header.Get("X-Forwarded-For")
 	}
-	if IPAddress == "" {
-		IPAddress = r.RemoteAddr
+	if ip == "" {
+		ip = r.Header.Get("X-Real-Ip")
 	}
-	return IPAddress
+	if ip == "" {
+		ip = r.RemoteAddr
+	}
+
+	fmt.Println("Detected IP:", ip)
+	return ip
 }
 
 func getGeoInfo(ip string) (IPInfo, error) {
